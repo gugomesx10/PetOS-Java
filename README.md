@@ -59,8 +59,8 @@ git clone https://github.com/gugomesx10/PetOS-Java.git
 cd PetOS-Java/project
 
 # Execute com Maven Wrapper
-./mvnw spring-boot:run        # Linux/Mac
-mvnw.cmd spring-boot:run      # Windows
+./mvnd spring-boot:run        # Linux/Mac
+mvnd.cmd spring-boot:run      # Windows
 ```
 
 A aplicação sobe na porta **8080** com dados de teste já inseridos automaticamente.
