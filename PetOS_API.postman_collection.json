@@ -1,0 +1,920 @@
+{
+  "info": {
+    "name": "PetOS API",
+    "_postman_id": "petos-api-collection-v1",
+    "description": "Collection completa da API PetOS - Sistema de gerenciamento de pets, vacinas, rotinas e alertas.\n\n## Como usar\n1. Importe esta collection no Postman\n2. Importe também o Environment `PetOS_Environment`\n3. Certifique-se que a aplicação está rodando em `http://localhost:8080`\n4. Comece criando um Pet e use o `pet_id` retornado nas demais requisições\n\n## Enums disponíveis\n**Species:** `DOG`, `CAT`, `BIRD`, `RABBIT`, `HAMSTER`, `FISH`, `REPTILE`, `OTHER`\n\n**VaccineStatus:** `PENDING`, `APPLIED`, `OVERDUE`, `EXPIRING_SOON`\n\n**RoutineType:** `FEEDING`, `BATHING`, `WALK`, `MEDICATION`, `VET_VISIT`, `GROOMING`, `EXERCISE`, `OTHER`\n\n**AlertType:** `VACCINE_DUE`, `VACCINE_OVERDUE`, `ROUTINE_REMINDER`, `HEALTH_CHECK`, `BIRTHDAY`, `OTHER`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "pet_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "vaccine_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "routine_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "alert_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🐾 Pets",
+      "description": "Endpoints para gerenciamento de pets",
+      "item": [
+        {
+          "name": "Listar todos os pets (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets?page=0&size=10&sort=name,asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Número da página (começa em 0)"
+                },
+                {
+                  "key": "size",
+                  "value": "10",
+                  "description": "Quantidade de itens por página"
+                },
+                {
+                  "key": "sort",
+                  "value": "name,asc",
+                  "description": "Ordenação: campo,direção (asc ou desc)"
+                }
+              ]
+            },
+            "description": "Retorna todos os pets ativos com paginação. Por padrão ordena por nome de forma crescente."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar pet por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets/{{pet_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "{{pet_id}}"]
+            },
+            "description": "Busca um pet específico pelo seu ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar pets por nome",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets/search?name=Rex&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "search"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Rex",
+                  "description": "Nome (ou parte do nome) do pet para busca"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Busca pets pelo nome (pesquisa parcial)."
+          },
+          "response": []
+        },
+        {
+          "name": "Filtrar pets por espécie",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets/species/DOG?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "species", "DOG"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Filtra pets por espécie.\n\nEspécies disponíveis: `DOG`, `CAT`, `BIRD`, `RABBIT`, `HAMSTER`, `FISH`, `REPTILE`, `OTHER`"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar pets com vacinas vencidas ou próximas do vencimento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets/vaccines/expiring",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "vaccines", "expiring"]
+            },
+            "description": "Retorna a lista de pets que possuem vacinas vencidas ou prestes a vencer."
+          },
+          "response": []
+        },
+        {
+          "name": "Histórico consolidado do pet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets/{{pet_id}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "{{pet_id}}", "history"]
+            },
+            "description": "Retorna o histórico consolidado do pet, incluindo vacinas, rotinas e alertas."
+          },
+          "response": []
+        },
+        {
+          "name": "Cadastrar novo pet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('pet_id', jsonData.id);",
+                  "    console.log('Pet criado com ID:', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rex\",\n  \"species\": \"DOG\",\n  \"breed\": \"Labrador\",\n  \"birthDate\": \"2020-05-15\",\n  \"weight\": 25.5,\n  \"tutorName\": \"João Silva\",\n  \"tutorPhone\": \"(11) 99999-9999\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pets",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets"]
+            },
+            "description": "Cadastra um novo pet no sistema.\n\n**Campos obrigatórios:** `name`, `species`, `tutorName`\n\n**Espécies disponíveis:** `DOG`, `CAT`, `BIRD`, `RABBIT`, `HAMSTER`, `FISH`, `REPTILE`, `OTHER`\n\n> O ID retornado é salvo automaticamente na variável `pet_id` da collection."
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar dados do pet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rex Atualizado\",\n  \"species\": \"DOG\",\n  \"breed\": \"Labrador Retriever\",\n  \"birthDate\": \"2020-05-15\",\n  \"weight\": 27.0,\n  \"tutorName\": \"João Silva\",\n  \"tutorPhone\": \"(11) 98888-8888\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pets/{{pet_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "{{pet_id}}"]
+            },
+            "description": "Atualiza todos os dados do pet informado."
+          },
+          "response": []
+        },
+        {
+          "name": "Inativar pet (soft delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pets/{{pet_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "{{pet_id}}"]
+            },
+            "description": "Realiza a inativação do pet (soft delete). O registro não é removido do banco de dados."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💉 Vacinas",
+      "description": "Endpoints para gerenciamento de vacinas dos pets",
+      "item": [
+        {
+          "name": "Listar todas as vacinas (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vaccines?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["vaccines"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retorna todas as vacinas cadastradas com paginação."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar vacina por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vaccines/{{vaccine_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["vaccines", "{{vaccine_id}}"]
+            },
+            "description": "Busca uma vacina específica pelo seu ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar vacinas de um pet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets/{{pet_id}}/vaccines",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "{{pet_id}}", "vaccines"]
+            },
+            "description": "Retorna todas as vacinas de um pet específico."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar vacinas pendentes de um pet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets/{{pet_id}}/vaccines/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "{{pet_id}}", "vaccines", "pending"]
+            },
+            "description": "Retorna apenas as vacinas com status PENDING de um pet específico."
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar nova vacina",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('vaccine_id', jsonData.id);",
+                  "    console.log('Vacina criada com ID:', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": {{pet_id}},\n  \"name\": \"V10 - Vacina Polivalente\",\n  \"applicationDate\": \"2024-01-15\",\n  \"dueDate\": \"2025-01-15\",\n  \"status\": \"APPLIED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vaccines",
+              "host": ["{{baseUrl}}"],
+              "path": ["vaccines"]
+            },
+            "description": "Registra uma nova vacina para o pet.\n\nSe `dueDate` for uma data futura, um **alerta automático** será gerado no sistema.\n\n**Status disponíveis:** `PENDING`, `APPLIED`, `OVERDUE`, `EXPIRING_SOON`\n\n> O ID retornado é salvo automaticamente na variável `vaccine_id`."
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar vacina",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": {{pet_id}},\n  \"name\": \"V10 - Vacina Polivalente (Reforço)\",\n  \"applicationDate\": \"2024-01-15\",\n  \"dueDate\": \"2026-01-15\",\n  \"status\": \"APPLIED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vaccines/{{vaccine_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["vaccines", "{{vaccine_id}}"]
+            },
+            "description": "Atualiza os dados de uma vacina existente."
+          },
+          "response": []
+        },
+        {
+          "name": "Remover vacina",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vaccines/{{vaccine_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["vaccines", "{{vaccine_id}}"]
+            },
+            "description": "Remove uma vacina do sistema pelo ID."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Rotinas",
+      "description": "Endpoints para gerenciamento de rotinas e cuidados do pet",
+      "item": [
+        {
+          "name": "Listar todos os registros de rotina (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/routines?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["routines"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retorna todos os registros de rotina com paginação."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar rotina por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/routines/{{routine_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["routines", "{{routine_id}}"]
+            },
+            "description": "Busca um registro de rotina específico pelo seu ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar rotinas de um pet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets/{{pet_id}}/routines",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "{{pet_id}}", "routines"]
+            },
+            "description": "Retorna as rotinas de um pet específico em ordem cronológica decrescente."
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar nova rotina",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('routine_id', jsonData.id);",
+                  "    console.log('Rotina criada com ID:', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": {{pet_id}},\n  \"type\": \"WALK\",\n  \"description\": \"Passeio matinal no parque por 30 minutos\",\n  \"recordDate\": \"2026-04-23\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/routines",
+              "host": ["{{baseUrl}}"],
+              "path": ["routines"]
+            },
+            "description": "Registra uma nova rotina/cuidado para o pet.\n\n**Tipos disponíveis:** `FEEDING`, `BATHING`, `WALK`, `MEDICATION`, `VET_VISIT`, `GROOMING`, `EXERCISE`, `OTHER`\n\n> O ID retornado é salvo automaticamente na variável `routine_id`."
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar rotina",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": {{pet_id}},\n  \"type\": \"EXERCISE\",\n  \"description\": \"Corrida leve no parque por 1 hora\",\n  \"recordDate\": \"2026-04-23\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/routines/{{routine_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["routines", "{{routine_id}}"]
+            },
+            "description": "Atualiza os dados de um registro de rotina existente."
+          },
+          "response": []
+        },
+        {
+          "name": "Remover rotina",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/routines/{{routine_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["routines", "{{routine_id}}"]
+            },
+            "description": "Remove um registro de rotina pelo ID."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔔 Alertas",
+      "description": "Endpoints para gerenciamento de alertas dos pets",
+      "item": [
+        {
+          "name": "Listar todos os alertas (paginado)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/alerts?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retorna todos os alertas cadastrados com paginação."
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar alerta por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alert_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "{{alert_id}}"]
+            },
+            "description": "Busca um alerta específico pelo seu ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar alertas pendentes (não enviados)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "pending"]
+            },
+            "description": "Retorna todos os alertas que ainda não foram enviados (sent = false)."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar alertas de um pet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets/{{pet_id}}/alerts",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "{{pet_id}}", "alerts"]
+            },
+            "description": "Retorna todos os alertas de um pet específico."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar alertas pendentes de um pet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pets/{{pet_id}}/alerts/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["pets", "{{pet_id}}", "alerts", "pending"]
+            },
+            "description": "Retorna os alertas pendentes (não enviados) de um pet específico."
+          },
+          "response": []
+        },
+        {
+          "name": "Criar novo alerta manualmente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('alert_id', jsonData.id);",
+                  "    console.log('Alerta criado com ID:', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": {{pet_id}},\n  \"type\": \"HEALTH_CHECK\",\n  \"message\": \"Lembrete de consulta veterinária de rotina\",\n  \"dueDate\": \"2026-05-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/alerts",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts"]
+            },
+            "description": "Cria um novo alerta manualmente para o pet.\n\n**Tipos disponíveis:** `VACCINE_DUE`, `VACCINE_OVERDUE`, `ROUTINE_REMINDER`, `HEALTH_CHECK`, `BIRTHDAY`, `OTHER`\n\n> O ID retornado é salvo automaticamente na variável `alert_id`."
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar alerta",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": {{pet_id}},\n  \"type\": \"BIRTHDAY\",\n  \"message\": \"Aniversário do Rex - 6 anos!\",\n  \"dueDate\": \"2026-05-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alert_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "{{alert_id}}"]
+            },
+            "description": "Atualiza os dados de um alerta existente."
+          },
+          "response": []
+        },
+        {
+          "name": "Marcar alerta como enviado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alert_id}}/mark-sent",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "{{alert_id}}", "mark-sent"]
+            },
+            "description": "Marca um alerta como enviado, alterando o campo `sent` para `true`."
+          },
+          "response": []
+        },
+        {
+          "name": "Remover alerta",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alert_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "{{alert_id}}"]
+            },
+            "description": "Remove um alerta pelo ID."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🛠️ Utilitários",
+      "description": "Endpoints utilitários do sistema",
+      "item": [
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/swagger-ui.html",
+              "host": ["{{baseUrl}}"],
+              "path": ["swagger-ui.html"]
+            },
+            "description": "Abre a interface visual do Swagger para explorar a API."
+          },
+          "response": []
+        },
+        {
+          "name": "API Docs (OpenAPI JSON)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api-docs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api-docs"]
+            },
+            "description": "Retorna a especificação OpenAPI 3.0 da API em formato JSON."
+          },
+          "response": []
+        },
+        {
+          "name": "H2 Console (Database)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/h2-console",
+              "host": ["{{baseUrl}}"],
+              "path": ["h2-console"]
+            },
+            "description": "Abre o console H2 para acessar o banco de dados em memória.\n\n**Configurações de acesso:**\n- JDBC URL: `jdbc:h2:mem:petosdb`\n- Username: `sa`\n- Password: *(deixar em branco)*"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
+
