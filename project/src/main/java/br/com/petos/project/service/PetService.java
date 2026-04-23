@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -58,7 +59,9 @@ public class PetService {
 
     @Transactional(readOnly = true)
     public List<PetResponseDTO> findPetsWithVaccinesDueOrExpiringSoon() {
-        return petRepository.findPetsWithVaccinesDueOrExpiringSoon()
+        LocalDate today = LocalDate.now();
+        LocalDate thirtyDaysFromNow = today.plusDays(30);
+        return petRepository.findPetsWithVaccinesDueOrExpiringSoon(today, thirtyDaysFromNow)
                 .stream()
                 .map(petMapper::toResponseDTO)
                 .toList();
