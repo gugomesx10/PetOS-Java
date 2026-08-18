@@ -1,24 +1,25 @@
 package br.com.petos.project.service;
 
+import br.com.petos.project.domain.VaccinationPolicy;
 import br.com.petos.project.dto.VaccineRequestDTO;
 import br.com.petos.project.dto.VaccineResponseDTO;
-import br.com.petos.project.entity.Alert;
 import br.com.petos.project.entity.Pet;
 import br.com.petos.project.entity.Vaccine;
-import br.com.petos.project.enums.AlertType;
-import br.com.petos.project.enums.VaccineStatus;
+import br.com.petos.project.exception.BusinessRuleException;
 import br.com.petos.project.exception.ResourceNotFoundException;
 import br.com.petos.project.mapper.VaccineMapper;
-import br.com.petos.project.repository.AlertRepository;
 import br.com.petos.project.repository.VaccineRepository;
+import br.com.petos.project.security.AuthenticatedUser;
+import br.com.petos.project.security.CurrentUserProvider;
+import br.com.petos.project.security.PetAccessPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -26,100 +27,89 @@ import java.util.List;
 public class VaccineService {
 
     private final VaccineRepository vaccineRepository;
-    private final AlertRepository alertRepository;
-    private final PetService petService;
     private final VaccineMapper vaccineMapper;
+    private final VaccineAlertService vaccineAlertService;
+    private final PetAccessPolicy petAccessPolicy;
+    private final CurrentUserProvider currentUserProvider;
 
     @Transactional(readOnly = true)
     public Page<VaccineResponseDTO> findAll(Pageable pageable) {
-        return vaccineRepository.findAll(pageable).map(vaccineMapper::toResponseDTO);
+        AuthenticatedUser user = currentUserProvider.require();
+        Page<Vaccine> vaccines = user.isClinica()
+                ? vaccineRepository.findByPetActiveTrue(pageable)
+                : vaccineRepository.findByPetOwnerIdAndPetActiveTrue(user.getId(), pageable);
+        return vaccines.map(vaccineMapper::toResponseDTO);
     }
 
     @Transactional(readOnly = true)
     public VaccineResponseDTO findById(Long id) {
-        return vaccineMapper.toResponseDTO(findVaccineById(id));
+        return vaccineMapper.toResponseDTO(findReadableVaccine(id));
     }
 
     @Transactional(readOnly = true)
     public List<VaccineResponseDTO> findByPetId(Long petId) {
-        petService.findPetById(petId);
-        return vaccineRepository.findByPetId(petId)
+        petAccessPolicy.requireReadable(petId);
+        return vaccineRepository.findByPetIdOrderByDueDateAsc(petId)
                 .stream().map(vaccineMapper::toResponseDTO).toList();
     }
 
     @Transactional(readOnly = true)
     public List<VaccineResponseDTO> findPendingByPetId(Long petId) {
-        petService.findPetById(petId);
-        return vaccineRepository.findPendingByPetId(petId)
+        petAccessPolicy.requireReadable(petId);
+        return vaccineRepository
+                .findByPetIdAndStatusInOrderByDueDateAsc(petId, VaccinationPolicy.PENDING_STATUSES)
                 .stream().map(vaccineMapper::toResponseDTO).toList();
     }
 
     @Transactional
+    @PreAuthorize("hasRole('CLINICA')")
     public VaccineResponseDTO create(VaccineRequestDTO dto) {
-        Pet pet = petService.findPetById(dto.getPetId());
-        Vaccine vaccine = vaccineMapper.toEntity(dto, pet);
+        Pet pet = petAccessPolicy.requireActivePet(dto.getPetId());
+        validateDates(dto);
 
-        // Regra de negócio: atualizar status automaticamente
-        vaccine = updateVaccineStatus(vaccine);
+        Vaccine vaccine = vaccineMapper.toEntity(dto, pet);
+        vaccine.refreshStatus(LocalDate.now());
         vaccine = vaccineRepository.save(vaccine);
 
-        // Regra de negócio: gerar alerta automático se vacina tiver vencimento futuro
-        if (dto.getDueDate() != null && dto.getDueDate().isAfter(LocalDate.now())) {
-            generateVaccineAlert(pet, vaccine);
-        }
-
+        vaccineAlertService.synchronizePreventiveAlert(vaccine);
         return vaccineMapper.toResponseDTO(vaccine);
     }
 
     @Transactional
+    @PreAuthorize("hasRole('CLINICA')")
     public VaccineResponseDTO update(Long id, VaccineRequestDTO dto) {
         Vaccine vaccine = findVaccineById(id);
+        petAccessPolicy.requireActivePet(vaccine.getPet().getId());
+        validateDates(dto);
+
         vaccineMapper.updateEntity(vaccine, dto);
-        vaccine = updateVaccineStatus(vaccine);
-        return vaccineMapper.toResponseDTO(vaccineRepository.save(vaccine));
+        vaccine.refreshStatus(LocalDate.now());
+        vaccine = vaccineRepository.save(vaccine);
+
+        vaccineAlertService.synchronizePreventiveAlert(vaccine);
+        return vaccineMapper.toResponseDTO(vaccine);
     }
 
     @Transactional
+    @PreAuthorize("hasRole('CLINICA')")
     public void delete(Long id) {
         Vaccine vaccine = findVaccineById(id);
+        petAccessPolicy.requireActivePet(vaccine.getPet().getId());
         vaccineRepository.delete(vaccine);
     }
 
-    private Vaccine updateVaccineStatus(Vaccine vaccine) {
-        if (vaccine.getDueDate() == null) return vaccine;
-
-        LocalDate today = LocalDate.now();
-        if (vaccine.getApplicationDate() != null && !vaccine.getApplicationDate().isAfter(today)) {
-            if (vaccine.getDueDate().isBefore(today)) {
-                vaccine.setStatus(VaccineStatus.OVERDUE);
-            } else if (vaccine.getDueDate().isBefore(today.plusDays(30))) {
-                vaccine.setStatus(VaccineStatus.EXPIRING_SOON);
-            } else {
-                vaccine.setStatus(VaccineStatus.APPLIED);
-            }
-        } else if (vaccine.getDueDate().isBefore(today)) {
-            vaccine.setStatus(VaccineStatus.OVERDUE);
-        } else if (vaccine.getDueDate().isBefore(today.plusDays(30))) {
-            vaccine.setStatus(VaccineStatus.EXPIRING_SOON);
+    private void validateDates(VaccineRequestDTO dto) {
+        if (dto.getApplicationDate() != null && dto.getDueDate() != null
+                && dto.getDueDate().isBefore(dto.getApplicationDate())) {
+            throw new BusinessRuleException(
+                    "Data de vencimento não pode ser anterior à data de aplicação.");
         }
-
-        return vaccine;
     }
 
-    private void generateVaccineAlert(Pet pet, Vaccine vaccine) {
-        String message = String.format(
-                "Vacina '%s' do pet %s vence em %s. Agende a dose de reforço!",
-                vaccine.getName(), pet.getName(), vaccine.getDueDate()
-        );
-        Alert alert = Alert.builder()
-                .pet(pet)
-                .type(AlertType.VACCINE_DUE)
-                .message(message)
-                .dueDate(vaccine.getDueDate())
-                .sent(false)
-                .createdAt(LocalDateTime.now())
-                .build();
-        alertRepository.save(alert);
+    private Vaccine findReadableVaccine(Long id) {
+        Vaccine vaccine = findVaccineById(id);
+        petAccessPolicy.requireReadable(vaccine.getPet().getId());
+        return vaccine;
     }
 
     private Vaccine findVaccineById(Long id) {
@@ -127,4 +117,3 @@ public class VaccineService {
                 .orElseThrow(() -> new ResourceNotFoundException("Vacina", id));
     }
 }
-

@@ -7,6 +7,9 @@ import br.com.petos.project.entity.RoutineRecord;
 import br.com.petos.project.exception.ResourceNotFoundException;
 import br.com.petos.project.mapper.RoutineRecordMapper;
 import br.com.petos.project.repository.RoutineRecordRepository;
+import br.com.petos.project.security.AuthenticatedUser;
+import br.com.petos.project.security.CurrentUserProvider;
+import br.com.petos.project.security.PetAccessPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,29 +23,36 @@ import java.util.List;
 public class RoutineRecordService {
 
     private final RoutineRecordRepository routineRecordRepository;
-    private final PetService petService;
     private final RoutineRecordMapper routineRecordMapper;
+    private final PetAccessPolicy petAccessPolicy;
+    private final CurrentUserProvider currentUserProvider;
 
     @Transactional(readOnly = true)
     public Page<RoutineResponseDTO> findAll(Pageable pageable) {
-        return routineRecordRepository.findAll(pageable).map(routineRecordMapper::toResponseDTO);
+        AuthenticatedUser user = currentUserProvider.require();
+        Page<RoutineRecord> records = user.isClinica()
+                ? routineRecordRepository.findByPetActiveTrue(pageable)
+                : routineRecordRepository.findByPetOwnerIdAndPetActiveTrue(user.getId(), pageable);
+        return records.map(routineRecordMapper::toResponseDTO);
     }
 
     @Transactional(readOnly = true)
     public RoutineResponseDTO findById(Long id) {
-        return routineRecordMapper.toResponseDTO(findRecordById(id));
+        RoutineRecord record = findRecordById(id);
+        petAccessPolicy.requireReadable(record.getPet().getId());
+        return routineRecordMapper.toResponseDTO(record);
     }
 
     @Transactional(readOnly = true)
     public List<RoutineResponseDTO> findByPetId(Long petId) {
-        petService.findPetById(petId);
+        petAccessPolicy.requireReadable(petId);
         return routineRecordRepository.findByPetIdOrderByRecordDateDesc(petId)
                 .stream().map(routineRecordMapper::toResponseDTO).toList();
     }
 
     @Transactional
     public RoutineResponseDTO create(RoutineRequestDTO dto) {
-        Pet pet = petService.findPetById(dto.getPetId());
+        Pet pet = petAccessPolicy.requireReadable(dto.getPetId());
         RoutineRecord record = routineRecordMapper.toEntity(dto, pet);
         return routineRecordMapper.toResponseDTO(routineRecordRepository.save(record));
     }
@@ -50,6 +60,7 @@ public class RoutineRecordService {
     @Transactional
     public RoutineResponseDTO update(Long id, RoutineRequestDTO dto) {
         RoutineRecord record = findRecordById(id);
+        petAccessPolicy.requireReadable(record.getPet().getId());
         routineRecordMapper.updateEntity(record, dto);
         return routineRecordMapper.toResponseDTO(routineRecordRepository.save(record));
     }
@@ -57,6 +68,7 @@ public class RoutineRecordService {
     @Transactional
     public void delete(Long id) {
         RoutineRecord record = findRecordById(id);
+        petAccessPolicy.requireReadable(record.getPet().getId());
         routineRecordRepository.delete(record);
     }
 
@@ -65,4 +77,3 @@ public class RoutineRecordService {
                 .orElseThrow(() -> new ResourceNotFoundException("Registro de rotina", id));
     }
 }
-
