@@ -6,8 +6,6 @@ import br.com.petos.project.entity.Alert;
 import br.com.petos.project.entity.Pet;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
 @Component
 public class AlertMapper {
 
@@ -18,7 +16,6 @@ public class AlertMapper {
                 .message(dto.getMessage())
                 .dueDate(dto.getDueDate())
                 .sent(false)
-                .createdAt(LocalDateTime.now())
                 .build();
     }
 
@@ -41,4 +38,3 @@ public class AlertMapper {
         alert.setDueDate(dto.getDueDate());
     }
 }
-

@@ -24,6 +24,10 @@ public class Alert {
     @JoinColumn(name = "pet_id", nullable = false)
     private Pet pet;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vaccine_id")
+    private Vaccine vaccine;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AlertType type;
