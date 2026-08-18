@@ -9,11 +9,17 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -33,27 +39,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
             ResourceNotFoundException ex, HttpServletRequest request) {
-        ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
     }
 
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<ErrorResponse> handleBusinessRuleException(
             BusinessRuleException ex, HttpServletRequest request) {
-        ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                "Business Rule Violation",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error);
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, "Business Rule Violation", ex.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -63,6 +55,8 @@ public class GlobalExceptionHandler {
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             fieldErrors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
+        log.warn("Requisição inválida em {} {}: {} campo(s) rejeitado(s)",
+                request.getMethod(), request.getRequestURI(), fieldErrors.size());
         ValidationErrorResponse error = new ValidationErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
@@ -71,7 +65,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 fieldErrors
         );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity.badRequest().body(error);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -96,30 +90,89 @@ public class GlobalExceptionHandler {
         return badRequest(message, request);
     }
 
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestParameter(
+            MissingServletRequestParameterException ex, HttpServletRequest request) {
+        String message = "Parâmetro obrigatório ausente: '%s' (%s)."
+                .formatted(ex.getParameterName(), ex.getParameterType());
+        return badRequest(message, request);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        String message = "Método HTTP '%s' não suportado neste recurso.%s"
+                .formatted(ex.getMethod(), supportedMethodsSuffix(ex));
+        log.warn("Requisição inválida em {} {}: {}", request.getMethod(), request.getRequestURI(), message);
+        return build(HttpStatus.METHOD_NOT_ALLOWED, "Method Not Allowed", message, request);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(
+            HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+        String supported = ex.getSupportedMediaTypes().stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(", "));
+        String message = "Content-Type '%s' não suportado. Utilize: %s."
+                .formatted(ex.getContentType(), supported.isBlank() ? "application/json" : supported);
+        log.warn("Requisição inválida em {} {}: {}", request.getMethod(), request.getRequestURI(), message);
+        return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type", message, request);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(
+            NoResourceFoundException ex, HttpServletRequest request) {
+        log.warn("Rota inexistente: {} {}", request.getMethod(), request.getRequestURI());
+        return build(HttpStatus.NOT_FOUND, "Not Found", "Recurso não encontrado.", request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException ex, HttpServletRequest request) {
+        log.warn("Acesso negado em {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
+        return build(HttpStatus.FORBIDDEN, "Forbidden",
+                "Você não possui permissão para acessar este recurso.", request);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(
+            AuthenticationException ex, HttpServletRequest request) {
+        log.warn("Falha de autenticação em {} {}", request.getMethod(), request.getRequestURI());
+        return build(HttpStatus.UNAUTHORIZED, "Unauthorized", "Credenciais inválidas.", request);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request) {
         log.error("Erro inesperado ao processar {} {}", request.getMethod(), request.getRequestURI(), ex);
-        ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                GENERIC_ERROR_MESSAGE,
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", GENERIC_ERROR_MESSAGE, request);
     }
 
     private ResponseEntity<ErrorResponse> badRequest(String message, HttpServletRequest request) {
         log.warn("Requisição inválida em {} {}: {}", request.getMethod(), request.getRequestURI(), message);
-        ErrorResponse error = new ErrorResponse(
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", message, request);
+    }
+
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String error, String message,
+                                                HttpServletRequest request) {
+        ErrorResponse body = new ErrorResponse(
                 LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
+                status.value(),
+                error,
                 message,
                 request.getRequestURI()
         );
-        return ResponseEntity.badRequest().body(error);
+        return ResponseEntity.status(status).body(body);
+    }
+
+    private String supportedMethodsSuffix(HttpRequestMethodNotSupportedException ex) {
+        if (ex.getSupportedHttpMethods() == null || ex.getSupportedHttpMethods().isEmpty()) {
+            return "";
+        }
+        String supported = ex.getSupportedHttpMethods().stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(", "));
+        return " Métodos permitidos: " + supported + ".";
     }
 
     private String describeExpected(Class<?> requiredType) {
@@ -157,22 +210,4 @@ public class GlobalExceptionHandler {
                 .map(Object::toString)
                 .collect(Collectors.joining(", "));
     }
-
-    public record ErrorResponse(
-            LocalDateTime timestamp,
-            int status,
-            String error,
-            String message,
-            String path
-    ) {}
-
-    public record ValidationErrorResponse(
-            LocalDateTime timestamp,
-            int status,
-            String error,
-            String message,
-            String path,
-            Map<String, String> fieldErrors
-    ) {}
 }
-

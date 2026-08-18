@@ -1,7 +1,8 @@
 package br.com.petos.project.repository;
 
 import br.com.petos.project.entity.RoutineRecord;
-import br.com.petos.project.enums.RoutineType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +13,8 @@ public interface RoutineRecordRepository extends JpaRepository<RoutineRecord, Lo
 
     List<RoutineRecord> findByPetIdOrderByRecordDateDesc(Long petId);
 
-    List<RoutineRecord> findByPetIdAndType(Long petId, RoutineType type);
-}
+    Page<RoutineRecord> findByPetActiveTrue(Pageable pageable);
 
+    Page<RoutineRecord> findByPetOwnerIdAndPetActiveTrue(Long ownerId, Pageable pageable);
+
+}

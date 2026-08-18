@@ -1,5 +1,6 @@
 package br.com.petos.project.entity;
 
+import br.com.petos.project.domain.VaccinationPolicy;
 import br.com.petos.project.enums.VaccineStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,5 +37,15 @@ public class Vaccine {
     @Column(nullable = false)
     @Builder.Default
     private VaccineStatus status = VaccineStatus.PENDING;
-}
 
+    /**
+     * Recalcula e aplica o status desta vacina conforme a politica de vacinacao.
+     */
+    public void refreshStatus(LocalDate reference) {
+        this.status = VaccinationPolicy.resolveStatus(applicationDate, dueDate, reference);
+    }
+
+    public boolean isExpiringSoon(LocalDate reference) {
+        return VaccinationPolicy.isExpiringSoon(status, dueDate, reference);
+    }
+}

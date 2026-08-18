@@ -42,6 +42,10 @@ public class Pet {
     @Column(name = "tutor_phone", length = 20)
     private String tutorPhone;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean active = true;
@@ -57,5 +61,8 @@ public class Pet {
     @OneToMany(mappedBy = "pet", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Alert> alerts = new ArrayList<>();
-}
 
+    public boolean isOwnedBy(Long userId) {
+        return userId != null && owner != null && userId.equals(owner.getId());
+    }
+}
