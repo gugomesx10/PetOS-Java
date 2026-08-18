@@ -6,7 +6,6 @@
 
 # Maven
 project/target/
-project/.mvn/wrapper/maven-wrapper.jar
 
 # Build output
 *.class
