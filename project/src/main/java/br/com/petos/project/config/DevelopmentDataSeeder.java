@@ -43,7 +43,7 @@ public class DevelopmentDataSeeder {
     }
 
     private void seed() {
-        User tutor = createIfAbsent(tutorEmail, "Carlos Oliveira (tutor de exemplo)", Role.TUTOR);
+        User tutor = createIfAbsent(tutorEmail, "Gustavo Gomes Martins (tutor de exemplo)", Role.TUTOR);
         createIfAbsent(clinicaEmail, "Clínica VetPetOS (exemplo)", Role.CLINICA);
         adoptOrphanPets(tutor);
     }
