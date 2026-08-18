@@ -1,13 +1,11 @@
 package br.com.petos.project.exception;
 
+import br.com.petos.project.enums.Role;
 import br.com.petos.project.service.PetService;
+import br.com.petos.project.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -18,15 +16,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
 @DisplayName("Tratamento global de erros inesperados do servidor")
-class UnexpectedErrorHandlingTest {
+class UnexpectedErrorHandlingTest extends AbstractIntegrationTest {
 
     private static final String INTERNAL_DETAIL = "detalhe-interno-confidencial-do-banco";
-
-    @Autowired
-    private MockMvc mockMvc;
 
     @MockitoBean
     private PetService petService;
@@ -34,10 +27,11 @@ class UnexpectedErrorHandlingTest {
     @Test
     @DisplayName("Erro inesperado deve retornar 500 sem vazar detalhes internos nem stack trace")
     void shouldReturnInternalServerErrorWithoutLeakingDetails() throws Exception {
+        String token = registerAndGetToken(Role.TUTOR);
         given(petService.findById(anyLong()))
                 .willThrow(new IllegalStateException(INTERNAL_DETAIL));
 
-        mockMvc.perform(get("/pets/1"))
+        mockMvc.perform(authenticated(get("/pets/1"), token))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.error").value("Internal Server Error"))
@@ -48,4 +42,3 @@ class UnexpectedErrorHandlingTest {
                 .andExpect(content().string(not(containsString("br.com.petos"))));
     }
 }
-
