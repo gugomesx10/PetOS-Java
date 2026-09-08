@@ -25,8 +25,8 @@ class AuthenticationIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of(
-                                "name", "Ana Tutora",
-                                "email", "ana.tutora@petos.test",
+                                "name", "Gustavo Tutora",
+                                "email", "gustavo.tutor@petos.test",
                                 "password", DEFAULT_PASSWORD,
                                 "role", "TUTOR"))))
                 .andExpect(status().isCreated())
@@ -124,6 +124,13 @@ class AuthenticationIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    @Test
+    @DisplayName("Console H2 não é público fora do profile dev")
+    void h2ConsoleIsNotPublicOutsideDevelopment() throws Exception {
+        mockMvc.perform(get("/h2-console/"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

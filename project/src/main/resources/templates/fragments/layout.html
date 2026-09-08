@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#174d42"><title th:text="${title + ' · PetOS'}">PetOS</title>
+  <link rel="icon" th:href="@{/images/paw.svg}" type="image/svg+xml">
+  <link rel="stylesheet" th:href="@{/css/petos.css}"><script defer th:src="@{/js/forms.js}"></script>
+</head>
+<body>
+<a th:fragment="brand" class="brand" th:href="@{/web}"><img th:src="@{/images/paw.svg}" width="40" height="40" alt="">Pet<span>OS</span></a>
+<header th:fragment="header" class="topbar">
+  <a class="skip-link" href="#conteudo">Pular para conteúdo</a>
+  <a th:replace="~{fragments/layout :: brand}"></a>
+  <nav aria-label="Navegação principal"><a th:href="@{/web}">Pets e cuidados</a></nav>
+  <div class="account" sec:authorize="isAuthenticated()"><div><strong sec:authentication="name"></strong><small sec:authorize="hasRole('TUTOR')">Tutor</small><small sec:authorize="hasRole('CLINICA')">Clínica veterinária</small></div>
+    <form th:action="@{/logout}" method="post"><button class="button secondary" type="submit">Sair</button></form>
+  </div>
+</header>
+<footer th:fragment="footer"><span>PetOS · Cuidado que acompanha cada fase.</span><span>Saúde, prevenção e rotina, juntas.</span></footer>
+<div th:fragment="messages"><p th:if="${success}" class="notice success" role="status" th:text="${success}"></p></div>
+<div th:fragment="errors" th:if="${#fields.hasAnyErrors()}" class="notice error" role="alert"><strong>Vamos revisar alguns dados?</strong><ul><li th:each="error : ${#fields.allErrors()}" th:text="${error}"></li></ul></div>
+<section th:fragment="petHeader(active)">
+  <a class="back-link" th:href="@{/web}">← Todos os pets</a>
+  <div class="pet-profile"><img class="pet-avatar large" th:src="@{/images/companions.svg}" alt="Ilustração de cachorro e gato"><div><p class="eyebrow">Caderneta de cuidados</p><h1 th:text="${pet.name}"></h1><p><span th:text="${@view.label(pet.species)}"></span> · <span th:text="${pet.breed ?: 'Raça não informada'}"></span><span th:if="${pet.weight != null}" th:text="${' · ' + pet.weight + ' kg'}"></span></p><small>Tutor: <span th:text="${pet.tutorName}"></span></small></div><span class="tag">Pet ativo</span></div>
+  <nav class="tabs" aria-label="Caderneta do pet"><a th:classappend="${active == 'vacinas'} ? 'active'" th:href="@{/web/pets/{id}/vacinas(id=${pet.id})}">Vacinação preventiva</a><a th:classappend="${active == 'historico'} ? 'active'" th:href="@{/web/pets/{id}/historico(id=${pet.id})}">Histórico consolidado</a></nav>
+</section>
+<section th:fragment="story" class="auth-story"><a th:replace="~{fragments/layout :: brand}"></a><p class="eyebrow">Mais presença. Mais cuidado.</p><h1>Uma vida inteira<br>de boas companhias.</h1><p>Da próxima vacina ao passeio de hoje: o cuidado do seu pet merece uma história bem guardada.</p><img class="companions" th:src="@{/images/companions.svg}" alt="Cachorro e gato juntos em um jardim"><div class="story-features"><span>✓ Vacinação preventiva</span><span>♡ Histórico que conecta</span></div></section>
+</body></html>
+
