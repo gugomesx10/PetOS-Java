@@ -78,7 +78,7 @@ Após o build, também é possível iniciar com `java -jar target/petos-challeng
 
 - Aplicação: **http://localhost:8080/**; login: **http://localhost:8080/login**.
 - Cadastro: **http://localhost:8080/cadastro**. Após cadastrar, entre com e-mail e senha.
-- No profile `dev` (padrão), existem contas de demonstração: `tutor@petos.local` e `clinica@petos.local`, com senha padrão `petos@dev2026`. São exclusivas para desenvolvimento local.
+- No profile `dev` (padrão), existem contas de demonstração: `tutor@petos.local` e `clinica@petos.local`. São exclusivas para desenvolvimento local.
 - Após login, o usuário retorna à página protegida solicitada ou segue para `/web`. O botão **Sair** encerra a sessão.
 - **TUTOR:** cadastra pets, consulta somente seus pets ativos, registra rotinas e acompanha vacinação e histórico.
 - **CLINICA:** consulta pets ativos de todos os tutores e registra, atualiza e exclui vacinas. Não cadastra pets. Não existe vínculo individual Clínica–Pet no modelo atual.
@@ -88,16 +88,16 @@ A proteção é feita no servidor por Spring Security e pelos services com owner
 
 ### Configuração e banco
 
-| Variável | Comportamento |
-|---|---|
-| `SPRING_PROFILES_ACTIVE` | Padrão `dev`; habilita dados de demonstração e console H2 local. |
-| `SERVER_PORT` | Padrão `8080`. |
-| `SPRING_DATASOURCE_URL` | Padrão H2 em memória: `jdbc:h2:mem:petosdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE`. |
-| `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` | Padrão `sa` / senha vazia, somente para ambiente local. |
-| `PETOS_DEV_SEED_PASSWORD` | Senha das contas de demonstração na criação. Alterá-la não redefine contas já persistidas. |
+| Variável | Comportamento                                                                                                                                                |
+|---|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `SPRING_PROFILES_ACTIVE` | Padrão `dev`; habilita dados de demonstração e console H2 local.                                                                                             |
+| `SERVER_PORT` | Padrão `8080`.                                                                                                                                               |
+| `SPRING_DATASOURCE_URL` | Padrão H2 em memória: `jdbc:h2:mem:petosdb`.                                                                        |
+| `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` | Padrão `sa` / senha protegida, somente para ambiente local.                                                                                                  |
+| `PETOS_DEV_SEED_PASSWORD` | Senha das contas de demonstração na criação. Alterá-la não redefine contas já persistidas.                                                                   |
 | `PETOS_JWT_SECRET` | Segredo aleatório de pelo menos 32 caracteres, fornecido externamente. Sem configuração, uma chave efêmera é gerada e tokens deixam de valer após reiniciar. |
-| `PETOS_JWT_EXPIRATION_MINUTES` | Validade do token da API, padrão `120`. |
-| `PETOS_CORS_ALLOWED_ORIGINS` | Origens explícitas da API. A UI integrada funciona na mesma origem e não depende de portas de frontend externo. |
+| `PETOS_JWT_EXPIRATION_MINUTES` | Validade do token da API, padrão `120`.                                                                                                                      |
+| `PETOS_CORS_ALLOWED_ORIGINS` | Origens explícitas da API. A UI integrada funciona na mesma origem e não depende de portas de frontend externo.                                              |
 
 No PowerShell, configure variáveis com `$env:NOME = 'valor'` antes de iniciar a aplicação. Não versione segredos. Para guardar dados entre reinícios locais, use `$env:SPRING_DATASOURCE_URL = 'jdbc:h2:file:./data/petosdb;DB_CLOSE_ON_EXIT=FALSE'`, executando sempre a partir de `project/`. No modo em memória, os dados são perdidos ao encerrar a JVM.
 
@@ -190,7 +190,7 @@ Disponível somente com o profile `dev`, para desenvolvimento local. Não exponh
 - **URL:** [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
 - **JDBC URL:** a mesma configurada em `SPRING_DATASOURCE_URL` (por padrão `jdbc:h2:mem:petosdb`)
 - **Usuário:** `sa`
-- **Senha:** *(vazio)*
+- **Senha:** *(protegida)*
 
 ---
 

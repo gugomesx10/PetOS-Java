@@ -4,6 +4,11 @@
 *.iws
 *.ipr
 
+# database
+data/
+*.mv.db
+*.trace.db
+
 # Maven
 project/target/
 
