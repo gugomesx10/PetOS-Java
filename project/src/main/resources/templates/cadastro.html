@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/layout :: head('Criar conta')}"></head><body><main class="auth-page"><section th:replace="~{fragments/layout :: story}"></section><section class="auth-form-side"><div class="auth-form"><p class="eyebrow">Cuidado compartilhado</p><h2>Vamos cuidar juntos?</h2><p class="muted">Crie sua conta. Campos com * são obrigatórios.</p>
+<form th:action="@{/cadastro}" th:object="${form}" method="post"><div th:replace="~{fragments/layout :: errors}"></div>
+<label class="field">Nome *<input th:field="*{name}" required minlength="2" maxlength="100" autocomplete="name"><small class="field-error" th:errors="*{name}"></small></label>
+<label class="field">E-mail *<input th:field="*{email}" type="email" required maxlength="150" autocomplete="email"><small class="field-error" th:errors="*{email}"></small></label>
+<label class="field">Senha *<input name="password" type="password" required minlength="8" maxlength="72" autocomplete="new-password"><small>De 8 a 72 caracteres. Não reutilize senhas.</small><small class="field-error" th:errors="*{password}"></small></label>
+<label class="field">Como você participa do cuidado? *<select th:field="*{role}" required><option value="TUTOR">Sou tutor de pet</option><option value="CLINICA">Sou de uma clínica veterinária</option></select><small class="field-error" th:errors="*{role}"></small></label>
+<p class="form-hint">Ambiente acadêmico: o cadastro de clínica ainda não possui verificação profissional. Esse perfil consulta pets ativos e registra suas vacinas.</p><button class="button full" type="submit">Criar minha conta</button></form><p class="auth-switch">Já tem uma conta? <a th:href="@{/login}">Entrar</a></p></div></section></main></body></html>
+

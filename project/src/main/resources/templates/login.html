@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Entrar')}"></head>
+<body><main class="auth-page"><section th:replace="~{fragments/layout :: story}"></section><section class="auth-form-side"><div class="auth-form"><p class="eyebrow">Seu espaço de cuidado</p><h2>Que bom ter você aqui.</h2><p class="muted">Entre para acompanhar quem faz parte da sua família.</p>
+<div th:replace="~{fragments/layout :: messages}"></div>
+<p th:if="${param.error}" role="alert" class="notice error">E-mail ou senha inválidos. Confira seus dados e tente novamente.</p>
+<p th:if="${param.logout}" role="status" class="notice success">Você saiu com segurança. Até o próximo cuidado!</p>
+<form th:action="@{/login}" method="post"><label class="field">E-mail *<input name="email" type="email" required maxlength="150" autocomplete="username" placeholder="voce@exemplo.com"></label><label class="field">Senha *<input name="password" type="password" required autocomplete="current-password"></label><button class="button full" type="submit">Entrar no PetOS</button></form>
+<p class="auth-switch">Primeira visita? <a th:href="@{/cadastro}">Criar conta</a></p></div></section></main></body></html>
+

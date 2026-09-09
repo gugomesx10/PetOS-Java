@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/layout :: head('Cadastrar pet')}"></head><body><header th:replace="~{fragments/layout :: header}"></header><main id="conteudo" class="main-content"><section class="panel form-panel"><a class="back-link" th:href="@{/web}">← Voltar aos pets</a><p class="eyebrow">Uma nova companhia</p><h1>Vamos conhecer seu pet.</h1><p class="muted">Os campos com * são obrigatórios. Os demais ajudam a completar a caderneta.</p>
+<form th:action="@{/web/pets/novo}" th:object="${form}" method="post"><div th:replace="~{fragments/layout :: errors}"></div><div class="form-grid">
+<label class="field">Nome do pet *<input th:field="*{name}" required minlength="2" maxlength="100"><small class="field-error" th:errors="*{name}"></small></label>
+<label class="field">Espécie *<select th:field="*{species}" required><option th:each="item : ${species}" th:value="${item}" th:text="${@view.label(item)}"></option></select><small class="field-error" th:errors="*{species}"></small></label>
+<label class="field">Raça<input th:field="*{breed}" maxlength="100"><small class="field-error" th:errors="*{breed}"></small></label>
+<label class="field">Data de nascimento<input th:field="*{birthDate}" type="date" th:max="${@view.today().minusDays(1)}"><small class="field-error" th:errors="*{birthDate}"></small></label>
+<label class="field">Peso (kg)<input th:field="*{weight}" type="number" min="0.001" step="any"><small class="field-error" th:errors="*{weight}"></small></label>
+<label class="field">Nome do tutor *<input th:field="*{tutorName}" required maxlength="100" autocomplete="name"><small class="field-error" th:errors="*{tutorName}"></small></label>
+<label class="field">Telefone do tutor<input th:field="*{tutorPhone}" type="tel" maxlength="20" autocomplete="tel" placeholder="(11) 99999-9999"><small class="field-error" th:errors="*{tutorPhone}"></small></label>
+</div><div class="form-actions"><a class="button secondary" th:href="@{/web}">Cancelar</a><button class="button">Criar caderneta</button></div></form></section></main><footer th:replace="~{fragments/layout :: footer}"></footer></body></html>
+

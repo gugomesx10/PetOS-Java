@@ -1,8 +1,8 @@
 package br.com.petos.project.dto;
 
-import br.com.petos.project.enums.VaccineStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,10 +24,8 @@ public class VaccineRequestDTO {
     @Size(max = 100, message = "Nome deve ter no máximo 100 caracteres")
     private String name;
 
+    @PastOrPresent(message = "Data de aplicação não pode ser no futuro")
     private LocalDate applicationDate;
 
     private LocalDate dueDate;
-
-    private VaccineStatus status;
 }
-

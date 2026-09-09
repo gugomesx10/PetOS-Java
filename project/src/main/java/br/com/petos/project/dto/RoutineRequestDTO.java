@@ -2,6 +2,7 @@ package br.com.petos.project.dto;
 
 import br.com.petos.project.enums.RoutineType;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +27,6 @@ public class RoutineRequestDTO {
     private String description;
 
     @NotNull(message = "Data do registro é obrigatória")
+    @PastOrPresent(message = "Data do registro não pode ser no futuro")
     private LocalDate recordDate;
 }
-

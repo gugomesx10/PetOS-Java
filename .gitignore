@@ -4,9 +4,13 @@
 *.iws
 *.ipr
 
+# database
+data/
+*.mv.db
+*.trace.db
+
 # Maven
 project/target/
-project/.mvn/wrapper/maven-wrapper.jar
 
 # Build output
 *.class
