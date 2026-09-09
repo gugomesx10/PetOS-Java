@@ -76,8 +76,8 @@ Após o build, também é possível iniciar com `java -jar target/petos-challeng
 
 ### Acesso, login e perfis
 
-- Aplicação: **http://localhost:8080/**; login: **http://localhost:8080/login**.
-- Cadastro: **http://localhost:8080/cadastro**. Após cadastrar, entre com e-mail e senha.
+- Aplicação: **https://petos-java.onrender.com**; login: **https://petos-java.onrender.com/login**.
+- Cadastro: **https://petos-java.onrender.com/cadastro**. Após cadastrar, entre com e-mail e senha.
 - No profile `dev` (padrão), existem contas de demonstração: `tutor@petos.local` e `clinica@petos.local`. São exclusivas para desenvolvimento local.
 - Após login, o usuário retorna à página protegida solicitada ou segue para `/web`. O botão **Sair** encerra a sessão.
 - **TUTOR:** cadastra pets, consulta somente seus pets ativos, registra rotinas e acompanha vacinação e histórico.
@@ -178,8 +178,8 @@ Os formulários combinam validações HTML com Bean Validation e regras de servi
 
 Após subir a aplicação, acesse:
 
-- **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **API Docs (JSON):** [http://localhost:8080/api-docs](http://localhost:8080/api-docs)
+- **Swagger UI:** [https://petos-java.onrender.com/swagger-ui/index.html](http://localhost:8080/swagger-ui.html)
+- **API Docs (JSON):** [https://petos-java.onrender.com/api-docs](http://localhost:8080/api-docs)
 
 ---
 
