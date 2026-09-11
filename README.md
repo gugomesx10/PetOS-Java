@@ -10,6 +10,12 @@ O PetOS centraliza o histórico de saúde, vacinas, rotinas e alertas dos pets, 
 
 ---
 
+## Link > Youtube
+
+[![YouTube](https://www.youtube.com/watch?v=ouuchAmVD28)](https://www.youtube.com/watch?v=ouuchAmVD28)
+
+---
+
 ## 🏗️ Arquitetura
 
 ```
