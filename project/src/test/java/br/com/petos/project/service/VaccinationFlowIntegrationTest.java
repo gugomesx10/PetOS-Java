@@ -14,6 +14,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 @DisplayName("Fluxo de vacinação preventiva")
 class VaccinationFlowIntegrationTest extends AbstractIntegrationTest {
@@ -158,6 +160,99 @@ class VaccinationFlowIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(1));
         mockMvc.perform(authenticated(get("/pets/vaccines/expiring"), outro))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("Excluir vacina também remove o alerta preventivo pendente")
+    void deletingVaccineRemovesPendingAlert() throws Exception {
+        String tutor = registerAndGetToken(Role.TUTOR);
+        String clinica = registerAndGetToken(Role.CLINICA);
+        Long petId = createPet(tutor, "Amora");
+
+        String vaccineId = readField(
+                mockMvc.perform(
+                                authenticated(post("/vaccines"), clinica)
+                                        .content(vaccinePayload(
+                                                petId,
+                                                LocalDate.now(),
+                                                LocalDate.now().plusDays(10)
+                                        ))
+                        )
+                        .andExpect(status().isCreated())
+                        .andReturn(),
+                "id"
+        );
+
+        mockMvc.perform(authenticated(get("/pets/" + petId + "/alerts"), tutor))
+                .andExpect(jsonPath("$.length()").value(1));
+
+        mockMvc.perform(authenticated(delete("/vaccines/" + vaccineId), clinica))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(authenticated(get("/pets/" + petId + "/alerts"), tutor))
+                .andExpect(jsonPath("$.length()").value(0));
+
+        mockMvc.perform(authenticated(get("/vaccines/" + vaccineId), clinica))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Excluir vacina remove todos os alertas vinculados, inclusive os enviados")
+    void deletingVaccineRemovesSentAndPendingAlerts() throws Exception {
+        String tutor = registerAndGetToken(Role.TUTOR);
+        String clinica = registerAndGetToken(Role.CLINICA);
+        Long petId = createPet(tutor, "Luna");
+
+        String vaccineId = readField(
+                mockMvc.perform(
+                                authenticated(post("/vaccines"), clinica)
+                                        .content(vaccinePayload(
+                                                petId,
+                                                LocalDate.now(),
+                                                LocalDate.now().plusDays(10)
+                                        ))
+                        )
+                        .andExpect(status().isCreated())
+                        .andReturn(),
+                "id"
+        );
+
+        var alertsResponse = mockMvc.perform(
+                        authenticated(get("/pets/" + petId + "/alerts"), tutor)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String alertId = objectMapper
+                .readTree(alertsResponse.getResponse().getContentAsString())
+                .get(0)
+                .get("id")
+                .asText();
+
+        mockMvc.perform(
+                        authenticated(patch("/alerts/" + alertId + "/mark-sent"), clinica)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sent").value(true));
+
+        mockMvc.perform(
+                        authenticated(put("/vaccines/" + vaccineId), clinica)
+                                .content(vaccinePayload(
+                                        petId,
+                                        LocalDate.now(),
+                                        LocalDate.now().plusDays(5)
+                                ))
+                )
+                .andExpect(status().isOk());
+
+        mockMvc.perform(authenticated(get("/pets/" + petId + "/alerts"), tutor))
+                .andExpect(jsonPath("$.length()").value(2));
+
+        mockMvc.perform(authenticated(delete("/vaccines/" + vaccineId), clinica))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(authenticated(get("/pets/" + petId + "/alerts"), tutor))
                 .andExpect(jsonPath("$.length()").value(0));
     }
 

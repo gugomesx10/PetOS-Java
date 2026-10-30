@@ -38,6 +38,11 @@ public class VaccineAlertService {
         return Optional.of(alertRepository.save(alert));
     }
 
+    @Transactional
+    public void deleteLinkedAlerts(Vaccine vaccine) {
+        alertRepository.deleteLinkedToVaccine(vaccine);
+    }
+
     private Alert newAlertFor(Vaccine vaccine) {
         return Alert.builder()
                 .pet(vaccine.getPet())
