@@ -4,6 +4,8 @@ import br.com.petos.project.enums.Role;
 import br.com.petos.project.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import br.com.petos.project.repository.VaccineRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -19,6 +21,58 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @DisplayName("Fluxo de vacinação preventiva")
 class VaccinationFlowIntegrationTest extends AbstractIntegrationTest {
+
+    @Autowired
+    private VaccineRepository vaccineRepository;
+
+    @Autowired
+    private VaccineStatusRefreshService vaccineStatusRefreshService;
+
+    @Test
+    @DisplayName(
+            "Reavalia vacina vencida sem edição e atualiza o alerta existente"
+    )
+    void refreshesOutdatedVaccineStatusAndAlert() throws Exception {
+        String tutor = registerAndGetToken(Role.TUTOR);
+        String clinica = registerAndGetToken(Role.CLINICA);
+
+        Long petId = createPet(tutor, "Amora");
+
+        String vaccineId = readField(
+                mockMvc.perform(authenticated(post("/vaccines"), clinica)
+                                .content(vaccinePayload(
+                                        petId,
+                                        LocalDate.now().minusMonths(2),
+                                        LocalDate.now().plusDays(7)
+                                )))
+                        .andExpect(status().isCreated())
+                        .andExpect(jsonPath("$.status").value("EXPIRING_SOON"))
+                        .andReturn(),
+                "id"
+        );
+
+        var vaccine = vaccineRepository
+                .findById(Long.valueOf(vaccineId))
+                .orElseThrow();
+
+        vaccine.setDueDate(LocalDate.now().minusDays(1));
+        vaccineRepository.saveAndFlush(vaccine);
+
+        vaccineStatusRefreshService.refreshStatuses();
+        vaccineStatusRefreshService.refreshStatuses();
+
+        mockMvc.perform(authenticated(
+                        get("/vaccines/" + vaccineId), clinica))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("OVERDUE"));
+
+        mockMvc.perform(authenticated(
+                        get("/pets/" + petId + "/alerts"), tutor))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].type")
+                        .value("VACCINE_OVERDUE"));
+    }
 
     @Test
     @DisplayName("Vacina próxima do vencimento gera alerta preventivo vinculado ao pet")
