@@ -32,6 +32,9 @@ public class Alert {
     @Column(nullable = false)
     private AlertType type;
 
+    @Column(name = "email_sent_at")
+    private LocalDateTime emailSentAt;
+
     @Column(nullable = false, length = 500)
     private String message;
 

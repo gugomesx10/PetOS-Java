@@ -9,6 +9,7 @@ import br.com.petos.project.entity.Vaccine;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import br.com.petos.project.enums.AlertType;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,4 +34,19 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
     @Modifying
     @Query("DELETE FROM Alert alert WHERE alert.vaccine = :vaccine")
     int deleteLinkedToVaccine(@Param("vaccine") Vaccine vaccine);
+
+    @Query("""
+    SELECT alert FROM Alert alert
+    JOIN FETCH alert.pet pet
+    JOIN FETCH pet.owner owner
+    WHERE alert.vaccine IS NOT NULL
+      AND alert.sent = false
+      AND alert.emailSentAt IS NULL
+      AND alert.type IN :types
+      AND pet.active = true
+      AND owner.active = true
+    """)
+    List<Alert> findVaccinationAlertsPendingEmail(
+            @Param("types") List<AlertType> types
+    );
 }
