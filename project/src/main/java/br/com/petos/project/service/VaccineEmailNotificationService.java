@@ -1,22 +1,24 @@
 package br.com.petos.project.service;
 
 import br.com.petos.project.entity.Alert;
+import br.com.petos.project.entity.User;
 import br.com.petos.project.enums.AlertType;
 import br.com.petos.project.repository.AlertRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -28,11 +30,20 @@ import java.util.Locale;
 )
 public class VaccineEmailNotificationService {
 
-    private final AlertRepository alertRepository;
-    private final JavaMailSender mailSender;
+    private static final String EMAILJS_URL =
+            "https://api.emailjs.com/api/v1.0/email/send";
 
-    @Value("${spring.mail.username:}")
-    private String senderAddress;
+    private final AlertRepository alertRepository;
+    private final RestClient.Builder restClientBuilder;
+
+    @Value("${petos.emailjs.service-id:}")
+    private String serviceId;
+
+    @Value("${petos.emailjs.template-id:}")
+    private String templateId;
+
+    @Value("${petos.emailjs.public-key:}")
+    private String publicKey;
 
     @Scheduled(
             cron = "${petos.email.cron:0 0 9 * * *}",
@@ -41,8 +52,11 @@ public class VaccineEmailNotificationService {
     @Transactional
     public void sendPendingVaccinationEmails() {
 
-        if (senderAddress == null || senderAddress.isBlank()) {
-            log.warn("Remetente de e-mail do PetOS não configurado.");
+        if (serviceId.isBlank()
+                || templateId.isBlank()
+                || publicKey.isBlank()) {
+
+            log.warn("EmailJS não configurado. Verifique as variáveis de ambiente.");
             return;
         }
 
@@ -54,67 +68,74 @@ public class VaccineEmailNotificationService {
                         )
                 );
 
+        RestClient client = restClientBuilder.build();
+        boolean attemptedRequest = false;
+
         for (Alert alert : pending) {
 
-            if (alert.getPet().getOwner() == null) {
+            if (alert.getPet() == null
+                    || alert.getPet().getOwner() == null) {
                 continue;
             }
 
-            String tutorEmail = alert.getPet()
-                    .getOwner()
-                    .getEmail();
+            User tutor = alert.getPet().getOwner();
+            String tutorEmail = tutor.getEmail();
 
             if (tutorEmail == null || tutorEmail.isBlank()) {
-                log.warn(
-                        "Alerta {} sem destinatário válido.",
-                        alert.getId()
-                );
                 continue;
             }
 
-            if (tutorEmail.trim()
-                    .toLowerCase(Locale.ROOT)
-                    .endsWith("@petos.local")) {
-                continue;
+            if (attemptedRequest) {
+                try {
+                    Thread.sleep(1100);
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    log.warn("Envio de notificações interrompido.");
+                    break;
+                }
             }
 
-            SimpleMailMessage email = new SimpleMailMessage();
+            attemptedRequest = true;
 
-            email.setFrom(senderAddress);
-            email.setTo(tutorEmail.trim());
-
-            email.setSubject(
-                    "PetOS | Lembrete de vacinação"
-            );
-
-            email.setText(
-                    "Olá, " +
-                            alert.getPet().getOwner().getName() +
-                            "!\n\n" +
-
-                            alert.getMessage() +
-
-                            "\n\n" +
-                            "Confira a caderneta de vacinação no PetOS." +
-
-                            "\n\n" +
-                            "Equipe PetOS"
+            Map<String, Object> payload = Map.of(
+                    "service_id", serviceId,
+                    "template_id", templateId,
+                    "user_id", publicKey,
+                    "template_params", Map.of(
+                            "email", tutorEmail,
+                            "name", tutor.getName(),
+                            "message", alert.getMessage()
+                    )
             );
 
             try {
-                mailSender.send(email);
+                client.post()
+                        .uri(EMAILJS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(payload)
+                        .retrieve()
+                        .toBodilessEntity();
 
                 alert.setEmailSentAt(LocalDateTime.now());
                 alertRepository.save(alert);
 
                 log.info(
-                        "E-mail de vacinação enviado. Alerta ID: {}",
+                        "Notificação enviada pelo EmailJS. Alerta: {}",
                         alert.getId()
                 );
 
-            } catch (MailException exception) {
+            } catch (RestClientResponseException exception) {
+
                 log.warn(
-                        "Falha no envio do alerta {}: {}",
+                        "Falha no envio do alerta {}. EmailJS HTTP {}",
+                        alert.getId(),
+                        exception.getStatusCode()
+                );
+
+            } catch (RestClientException exception) {
+
+                log.warn(
+                        "Falha de comunicação com EmailJS no alerta {}: {}",
                         alert.getId(),
                         exception.getClass().getSimpleName()
                 );
