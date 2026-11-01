@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -15,9 +16,19 @@ public interface VaccineRepository extends JpaRepository<Vaccine, Long> {
 
     List<Vaccine> findByPetIdOrderByDueDateAsc(Long petId);
 
-    List<Vaccine> findByPetIdAndStatusInOrderByDueDateAsc(Long petId, Collection<VaccineStatus> statuses);
+    List<Vaccine> findByPetIdAndStatusInOrderByDueDateAsc(
+            Long petId,
+            Collection<VaccineStatus> statuses
+    );
+
+    List<Vaccine> findByPetActiveTrueAndDueDateLessThanEqual(
+            LocalDate threshold
+    );
 
     Page<Vaccine> findByPetActiveTrue(Pageable pageable);
 
-    Page<Vaccine> findByPetOwnerIdAndPetActiveTrue(Long ownerId, Pageable pageable);
+    Page<Vaccine> findByPetOwnerIdAndPetActiveTrue(
+            Long ownerId,
+            Pageable pageable
+    );
 }
