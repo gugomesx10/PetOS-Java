@@ -95,6 +95,7 @@ public class VaccineService {
     public void delete(Long id) {
         Vaccine vaccine = findVaccineById(id);
         petAccessPolicy.requireActivePet(vaccine.getPet().getId());
+        vaccineAlertService.deleteLinkedAlerts(vaccine);
         vaccineRepository.delete(vaccine);
     }
 

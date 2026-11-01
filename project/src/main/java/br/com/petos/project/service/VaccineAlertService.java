@@ -8,6 +8,7 @@ import br.com.petos.project.repository.AlertRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Objects;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -32,10 +33,22 @@ public class VaccineAlertService {
 
         AlertType type = requiredType.get();
         Alert alert = pendingAlert.orElseGet(() -> newAlertFor(vaccine));
+
+        if (!Objects.equals(alert.getType(), type)
+                || !Objects.equals(alert.getDueDate(), vaccine.getDueDate())) {
+
+            alert.setEmailSentAt(null);
+        }
+
         alert.setType(type);
         alert.setMessage(buildMessage(type, vaccine));
         alert.setDueDate(vaccine.getDueDate());
         return Optional.of(alertRepository.save(alert));
+    }
+
+    @Transactional
+    public void deleteLinkedAlerts(Vaccine vaccine) {
+        alertRepository.deleteLinkedToVaccine(vaccine);
     }
 
     private Alert newAlertFor(Vaccine vaccine) {
