@@ -15,6 +15,8 @@ O PetOS reúne pets, registros de vacinação, rotinas de cuidado e alertas prev
 | Nicholas Albuquerque Buzo | 561082 |
 | Nicholas Camillo Canadas de Paula | 561262 |
 
+## Youtube: [https://www.youtube.com/watch?v=LAGPBdu5czM](https://www.youtube.com/watch?v=LAGPBdu5czM)
+
 ## 🎯 Problema e solução
 
 Informações de saúde dos pets muitas vezes ficam espalhadas em papéis, mensagens e anotações. Isso dificulta a consulta ao histórico e o acompanhamento de vacinas prestes a vencer ou já vencidas.
@@ -227,18 +229,8 @@ Além da suíte automatizada, a Sprint 4 foi validada manualmente com o fluxo **
 
 Confira parâmetros, contratos, exemplos e autenticação na documentação interativa em `/swagger-ui.html`. A rota `mark-sent` registra um estado de alerta no sistema; ela **não envia mensagens por WhatsApp**.
 
-## 📦 Publicação e evidências
-
-O endereço da implantação online e o vídeo demonstrativo da **Sprint 4** serão incluídos **após a publicação e a gravação**. O vídeo da Sprint 3 foi removido desta documentação. Conforme a orientação da entrega, o vídeo deve ter **até 15 minutos**, com a participação dos integrantes, apresentando o fluxo funcional, as decisões técnicas e a integração multidisciplinar.
-
-Para implantação, configure um **banco persistente**, um perfil sem dados de demonstração e todos os segredos por **variáveis de ambiente**. Não publique senhas, tokens, arquivos de dados locais ou contas de demonstração.
 
 **Atenção ao Render gratuito:** serviços Web gratuitos podem suspender sua execução após períodos de inatividade e usam armazenamento local temporário. Por isso, o agendamento interno das 09h00 **não é garantido nesse plano**, e um H2 armazenado em arquivo pode perder dados. Para uma demonstração online com dados persistentes, utilize um banco externo (por exemplo, PostgreSQL); para entregas pontuais, verifique que o serviço está ativo antes do teste.
-
-## 🌱 Próximos passos
-
-- Opcional: integrar notificações por WhatsApp em uma evolução futura, com provedor e configurações adequados.
-- Finalizar a publicação online e anexar o vídeo demonstrativo atualizado.
 
 ---
 
